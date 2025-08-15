@@ -1,5 +1,5 @@
 require('dotenv').config();
-const request = require("request");
+import request from "request";
 
 const MY_VERIFY_TOKEN = process.env.MY_VERIFY_TOKEN;
 
@@ -82,17 +82,8 @@ function handleMessage(sender_psid, received_message) {
         console.log("Text content:", received_message.text);
 
         // Create the payload for a basic text message - Trả lời tự động bằng tiếng Việt
-        let welcomeMessages = [
-            `Xin chào! Cảm ơn bạn đã nhắn tin cho chúng tôi. Tin nhắn của bạn: "${received_message.text}". Chúng tôi sẽ phản hồi sớm nhất có thể!`,
-            `Chào bạn! Cảm ơn bạn đã liên hệ với chúng tôi. Chúng tôi đã nhận được: "${received_message.text}". Đội ngũ hỗ trợ sẽ phản hồi trong thời gian sớm nhất!`,
-            `Xin chào! Rất vui khi nhận được tin nhắn từ bạn: "${received_message.text}". Chúng tôi sẽ trả lời bạn trong thời gian sớm nhất. Cảm ơn bạn!`,
-        ];
-        
-        // Chọn ngẫu nhiên 1 tin nhắn để trả lời đa dạng hơn
-        let randomMessage = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
-        
         response = {
-            "text": randomMessage
+            "text": `Xin chào! Cảm ơn bạn đã nhắn tin cho chúng tôi. Tin nhắn của bạn: "${received_message.text}". Chúng tôi sẽ phản hồi sớm nhất có thể!`
         }
 
         console.log("=== SENDING RESPONSE ===");
@@ -103,50 +94,35 @@ function handleMessage(sender_psid, received_message) {
 
         // Gets the URL of the message attachment
         let attachment_url = received_message.attachments[0].payload.url;
-        let attachment_type = received_message.attachments[0].type;
 
-        if (attachment_type === 'image') {
-            response = {
-                "attachment": {
-                    "type": "template",
-                    "payload": {
-                        "template_type": "generic",
-                        "elements": [{
-                            "title": "Cảm ơn bạn đã gửi hình ảnh!",
-                            "subtitle": "Hình này có đúng không?",
-                            "image_url": attachment_url,
-                            "buttons": [
-                                {
-                                    "type": "postback",
-                                    "title": "Đúng rồi!",
-                                    "payload": "yes",
-                                },
-                                {
-                                    "type": "postback",
-                                    "title": "Không đúng!",
-                                    "payload": "no"
-                                }
-                            ],
-                        }]
-                    }
+        response = {
+            "attachment": {
+                "type": "template",
+                "payload": {
+                    "template_type": "generic",
+                    "elements": [{
+                        "title": "Cảm ơn bạn đã gửi hình ảnh!",
+                        "subtitle": "Hình này có đúng không?",
+                        "image_url": attachment_url,
+                        "buttons": [
+                            {
+                                "type": "postback",
+                                "title": "Đúng rồi!",
+                                "payload": "yes",
+                            },
+                            {
+                                "type": "postback",
+                                "title": "Không đúng!",
+                                "payload": "no"
+                            }
+                        ],
+                    }]
                 }
-            }
-        } else {
-            // Trả lời cho video, audio, file khác
-            response = {
-                "text": `Cảm ơn bạn đã gửi ${attachment_type}! Chúng tôi đã nhận được và sẽ xem xét ngay.`
             }
         }
 
         console.log("=== SENDING ATTACHMENT RESPONSE ===");
         console.log("Response:", JSON.stringify(response, null, 2));
-        
-    } else {
-        // Trả lời cho mọi loại tin nhắn khác (sticker, quick reply, v.v.)
-        console.log("=== OTHER MESSAGE TYPE DETECTED ===");
-        response = {
-            "text": "Xin chào! Cảm ơn bạn đã liên hệ. Chúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi sớm nhất!"
-        }
     }
 
     // Sends the response message
@@ -212,7 +188,7 @@ function callSendAPI(sender_psid, response) {
     });
 }
 
-module.exports = {
+export default {
     test: test,
     getWebhook: getWebhook,
     postWebhook: postWebhook
