@@ -81,18 +81,18 @@ function handleMessage(sender_psid, received_message) {
         console.log("=== TEXT MESSAGE DETECTED ===");
         console.log("Text content:", received_message.text);
 
-        // Create the payload for a basic text message - Trả lời tự động bằng tiếng Việt
-        let welcomeMessages = [
-            `Xin chào! Cảm ơn bạn đã nhắn tin cho chúng tôi. Tin nhắn của bạn: "${received_message.text}". Chúng tôi sẽ phản hồi sớm nhất có thể!`,
-            `Chào bạn! Cảm ơn bạn đã liên hệ với chúng tôi. Chúng tôi đã nhận được: "${received_message.text}". Đội ngũ hỗ trợ sẽ phản hồi trong thời gian sớm nhất!`,
-            `Xin chào! Rất vui khi nhận được tin nhắn từ bạn: "${received_message.text}". Chúng tôi sẽ trả lời bạn trong thời gian sớm nhất. Cảm ơn bạn!`,
-        ];
-        
-        // Chọn ngẫu nhiên 1 tin nhắn để trả lời đa dạng hơn
-        let randomMessage = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+        // Tạo tin nhắn chào mừng với link trò chơi của quán
+        let welcomeMessage = `🎉 Chào mừng bạn đến với QUÁN 3 GÓC! 🎉
+
+Cảm ơn bạn đã nhắn tin: "${received_message.text}"
+
+🎮 Hãy thử trò chơi thú vị của chúng tôi tại:
+👉 https://quan3goc.page.gd
+
+Chúc bạn chơi vui vẻ và hẹn gặp lại bạn tại quán! 🥤🍕`;
         
         response = {
-            "text": randomMessage
+            "text": welcomeMessage
         }
 
         console.log("=== SENDING RESPONSE ===");
@@ -112,19 +112,19 @@ function handleMessage(sender_psid, received_message) {
                     "payload": {
                         "template_type": "generic",
                         "elements": [{
-                            "title": "Cảm ơn bạn đã gửi hình ảnh!",
-                            "subtitle": "Hình này có đúng không?",
+                            "title": "🎉 Cảm ơn bạn đã gửi hình ảnh!",
+                            "subtitle": "Chào mừng đến QUÁN 3 GÓC! 🎮 Thử trò chơi của chúng tôi nhé!",
                             "image_url": attachment_url,
                             "buttons": [
                                 {
-                                    "type": "postback",
-                                    "title": "Đúng rồi!",
-                                    "payload": "yes",
+                                    "type": "web_url",
+                                    "title": "🎮 Chơi Game Ngay!",
+                                    "url": "https://quan3goc.page.gd"
                                 },
                                 {
                                     "type": "postback",
-                                    "title": "Không đúng!",
-                                    "payload": "no"
+                                    "title": "👍 Thích hình này!",
+                                    "payload": "like_image"
                                 }
                             ],
                         }]
@@ -132,9 +132,16 @@ function handleMessage(sender_psid, received_message) {
                 }
             }
         } else {
-            // Trả lời cho video, audio, file khác
+            // Trả lời cho video, audio, file khác với link game
             response = {
-                "text": `Cảm ơn bạn đã gửi ${attachment_type}! Chúng tôi đã nhận được và sẽ xem xét ngay.`
+                "text": `🎉 Cảm ơn bạn đã gửi ${attachment_type}! 
+
+Chào mừng bạn đến với QUÁN 3 GÓC! 🎮
+
+Thử trò chơi thú vị của chúng tôi tại:
+👉 https://quan3goc.page.gd
+
+Chúc bạn chơi vui vẻ! 🥤🍕`
             }
         }
 
@@ -145,7 +152,14 @@ function handleMessage(sender_psid, received_message) {
         // Trả lời cho mọi loại tin nhắn khác (sticker, quick reply, v.v.)
         console.log("=== OTHER MESSAGE TYPE DETECTED ===");
         response = {
-            "text": "Xin chào! Cảm ơn bạn đã liên hệ. Chúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi sớm nhất!"
+            "text": `🎉 Xin chào! Chào mừng bạn đến với QUÁN 3 GÓC! 
+
+Cảm ơn bạn đã liên hệ với chúng tôi! 
+
+🎮 Hãy thử trò chơi thú vị của quán tại:
+👉 https://quan3goc.page.gd
+
+Chúc bạn có những phút giây vui vẻ! 🥤🍕`
         }
     }
 
