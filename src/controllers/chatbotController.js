@@ -68,28 +68,59 @@ let postWebhook = (req, res) => {
     }
 }
 
+// Function to get user profile information
+function getUserProfile(sender_psid) {
+    return new Promise((resolve, reject) => {
+        request({
+            "uri": `https://graph.facebook.com/v7.0/${sender_psid}?fields=first_name,last_name,profile_pic&access_token=${process.env.PAGE_ACCESS_TOKEN}`,
+            "method": "GET"
+        }, (err, res, body) => {
+            if (!err) {
+                let userProfile = JSON.parse(body);
+                console.log('=== USER PROFILE ===');
+                console.log(JSON.stringify(userProfile, null, 2));
+                resolve(userProfile);
+            } else {
+                console.error("=== ERROR GETTING USER PROFILE ===");
+                console.error("Error:", err);
+                reject(err);
+            }
+        });
+    });
+}
+
 // Handles messages events
-function handleMessage(sender_psid, received_message) {
+async function handleMessage(sender_psid, received_message) {
     console.log("=== HANDLE MESSAGE FUNCTION ===");
     console.log("Sender PSID:", sender_psid);
     console.log("Received message:", JSON.stringify(received_message, null, 2));
 
     let response;
+    
+    // Get user profile to personalize message
+    let userProfile;
+    try {
+        userProfile = await getUserProfile(sender_psid);
+    } catch (error) {
+        console.error("Failed to get user profile:", error);
+        userProfile = { first_name: "bạn" }; // fallback
+    }
 
     // Check if the message contains text
     if (received_message.text) {
         console.log("=== TEXT MESSAGE DETECTED ===");
         console.log("Text content:", received_message.text);
 
-        // Tạo tin nhắn chào mừng với link trò chơi của quán
-        let welcomeMessage = `🎉 Chào mừng bạn đến với QUÁN 3 GÓC! 🎉
+        // Tạo tin nhắn chào mừng với tên người dùng và link trò chơi của quán
+        let userName = userProfile.first_name || "bạn";
+        let welcomeMessage = `🎉 Chào mừng ${userName} đến với QUÁN 3 GÓC! 🎉
 
-Cảm ơn bạn đã nhắn tin: "${received_message.text}"
+Cảm ơn ${userName} đã nhắn tin
 
 🎮 Hãy thử trò chơi thú vị của chúng tôi tại:
 👉 https://quan3goc.page.gd
 
-Chúc bạn chơi vui vẻ và hẹn gặp lại bạn tại quán! 🥤🍕`;
+Chúc ${userName} chơi vui vẻ và hẹn gặp lại ${userName} tại quán! 🥤🍕`;
         
         response = {
             "text": welcomeMessage
@@ -104,6 +135,7 @@ Chúc bạn chơi vui vẻ và hẹn gặp lại bạn tại quán! 🥤🍕`;
         // Gets the URL of the message attachment
         let attachment_url = received_message.attachments[0].payload.url;
         let attachment_type = received_message.attachments[0].type;
+        let userName = userProfile.first_name || "bạn";
 
         if (attachment_type === 'image') {
             response = {
@@ -112,8 +144,8 @@ Chúc bạn chơi vui vẻ và hẹn gặp lại bạn tại quán! 🥤🍕`;
                     "payload": {
                         "template_type": "generic",
                         "elements": [{
-                            "title": "🎉 Cảm ơn bạn đã gửi hình ảnh!",
-                            "subtitle": "Chào mừng đến QUÁN 3 GÓC! 🎮 Thử trò chơi của chúng tôi nhé!",
+                            "title": `🎉 Cảm ơn ${userName} đã gửi hình ảnh!`,
+                            "subtitle": `Chào mừng ${userName} đến QUÁN 3 GÓC! 🎮 Thử trò chơi của chúng tôi nhé!`,
                             "image_url": attachment_url,
                             "buttons": [
                                 {
@@ -134,14 +166,14 @@ Chúc bạn chơi vui vẻ và hẹn gặp lại bạn tại quán! 🥤🍕`;
         } else {
             // Trả lời cho video, audio, file khác với link game
             response = {
-                "text": `🎉 Cảm ơn bạn đã gửi ${attachment_type}! 
+                "text": `🎉 Cảm ơn ${userName} đã gửi ${attachment_type}! 
 
-Chào mừng bạn đến với QUÁN 3 GÓC! 🎮
+Chào mừng ${userName} đến với QUÁN 3 GÓC! 🎮
 
 Thử trò chơi thú vị của chúng tôi tại:
 👉 https://quan3goc.page.gd
 
-Chúc bạn chơi vui vẻ! 🥤🍕`
+Chúc ${userName} chơi vui vẻ! 🥤🍕`
             }
         }
 
@@ -151,15 +183,16 @@ Chúc bạn chơi vui vẻ! 🥤🍕`
     } else {
         // Trả lời cho mọi loại tin nhắn khác (sticker, quick reply, v.v.)
         console.log("=== OTHER MESSAGE TYPE DETECTED ===");
+        let userName = userProfile.first_name || "bạn";
         response = {
-            "text": `🎉 Xin chào! Chào mừng bạn đến với QUÁN 3 GÓC! 
+            "text": `🎉 Xin chào ${userName}! Chào mừng ${userName} đến với QUÁN 3 GÓC! 
 
-Cảm ơn bạn đã liên hệ với chúng tôi! 
+Cảm ơn ${userName} đã liên hệ với chúng tôi! 
 
 🎮 Hãy thử trò chơi thú vị của quán tại:
 👉 https://quan3goc.page.gd
 
-Chúc bạn có những phút giây vui vẻ! 🥤🍕`
+Chúc ${userName} có những phút giây vui vẻ! 🥤🍕`
         }
     }
 
