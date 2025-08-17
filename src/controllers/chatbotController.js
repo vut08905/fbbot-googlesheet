@@ -1,10 +1,5 @@
 require('dotenv').config();
 const request = require("request");
-const gameDatabase = require('../services/gameDatabase');
-const { saveUserToDatabase } = require('../utils/userSaver');
-
-require('dotenv').config();
-const request = require("request");
 const databaseService = require('../services/databaseService');
 
 const MY_VERIFY_TOKEN = process.env.MY_VERIFY_TOKEN;
@@ -115,15 +110,6 @@ async function handleMessage(sender_psid, received_message) {
     } catch (error) {
         console.error("Failed to get user profile:", error);
         userProfile = { first_name: "bạn" }; // fallback
-    }
-
-    // 🔥 LƯU THÔNG TIN USER VÀO DATABASE WEB VÒNG QUAY
-    try {
-        const messageText = received_message.text || received_message.attachments?.[0]?.type || 'attachment';
-        await saveUserToDatabase(sender_psid, userProfile, messageText);
-    } catch (saveError) {
-        console.error("❌ Error saving user to web database:", saveError);
-        // Không dừng bot, chỉ log lỗi
     }
 
     // Check if the message contains text

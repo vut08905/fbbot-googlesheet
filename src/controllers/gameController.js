@@ -1,4 +1,4 @@
-const gameDatabase = require('../services/gameDatabase');
+const databaseService = require('../services/databaseService');
 const request = require("request");
 
 // API để tạo verification token và gửi link game
@@ -11,7 +11,7 @@ let createGameLink = async (req, res) => {
     
     try {
         // Tạo verification token
-        const token = await gameDatabase.createVerificationToken(psid);
+        const token = await databaseService.createVerificationToken(psid);
         
         // Tạo link game với token
         const gameLink = `https://quan3goc.page.gd/?token=${token}`;
@@ -36,36 +36,24 @@ let saveUserFromGame = async (req, res) => {
     }
     
     try {
-        // Lấy PSID từ token
-        const psid = await gameDatabase.getPsidFromToken(token);
-        if (!psid) {
+        // Lấy user từ token
+        const user = await databaseService.getUserByToken(token);
+        if (!user) {
             return res.status(400).json({ error: 'Invalid or expired token' });
         }
         
-        // Lấy thông tin user từ Facebook Graph API
-        const userProfile = await getUserProfile(psid);
-        
-        // Lưu thông tin user vào database
-        const userData = {
-            psid: psid,
-            first_name: userProfile.first_name || '',
-            last_name: userProfile.last_name || '',
-            profile_pic: userProfile.profile_pic || '',
-            phone: phone,
-            email: email || null
-        };
-        
-        await gameDatabase.saveUser(userData);
-        
-        // Đánh dấu token đã sử dụng
-        await gameDatabase.markTokenUsed(token);
+        // Lưu phone với token
+        const success = await databaseService.savePhoneWithToken(token, phone, email);
+        if (!success) {
+            return res.status(400).json({ error: 'Failed to save user information' });
+        }
         
         return res.json({ 
             success: true, 
             message: 'User information saved successfully',
             user: {
-                name: `${userData.first_name} ${userData.last_name}`.trim(),
-                phone: userData.phone
+                name: `${user.first_name} ${user.last_name}`.trim(),
+                phone: phone
             }
         });
     } catch (error) {
@@ -73,32 +61,6 @@ let saveUserFromGame = async (req, res) => {
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
-
-// Helper function để lấy user profile từ Facebook
-function getUserProfile(sender_psid) {
-    return new Promise((resolve, reject) => {
-        request({
-            "uri": `https://graph.facebook.com/v7.0/${sender_psid}?fields=first_name,last_name,profile_pic&access_token=${process.env.PAGE_ACCESS_TOKEN}`,
-            "method": "GET"
-        }, (err, res, body) => {
-            if (!err) {
-                try {
-                    const userProfile = JSON.parse(body);
-                    console.log('=== USER PROFILE FROM FACEBOOK ===');
-                    console.log(JSON.stringify(userProfile, null, 2));
-                    resolve(userProfile);
-                } catch (parseError) {
-                    console.error("Error parsing user profile:", parseError);
-                    reject(parseError);
-                }
-            } else {
-                console.error("=== ERROR GETTING USER PROFILE ===");
-                console.error("Error:", err);
-                reject(err);
-            }
-        });
-    });
-}
 
 module.exports = {
     createGameLink,
